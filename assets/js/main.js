@@ -237,6 +237,51 @@
     }
   }
 
+  /* ---------- Servizi: "Scopri di più" ---------- */
+  var serviceGrid = document.querySelector('.services-grid');
+  var serviceToggles = Array.prototype.slice.call(document.querySelectorAll('.service-toggle'));
+
+  function setServiceOpen(btn, open) {
+    var panel = document.getElementById(btn.getAttribute('aria-controls'));
+    var label = btn.querySelector('.service-toggle-label');
+    if ((btn.getAttribute('aria-expanded') === 'true') === open) return;
+    btn.setAttribute('aria-expanded', String(open));
+    label.textContent = open ? 'Mostra meno' : 'Scopri di più';
+    if (reduceMotion) { panel.hidden = !open; return; }
+    if (open) {
+      panel.hidden = false;
+      panel.style.height = '0px';
+      requestAnimationFrame(function () { panel.style.height = panel.scrollHeight + 'px'; });
+    } else {
+      panel.style.height = panel.scrollHeight + 'px';
+      requestAnimationFrame(function () { panel.style.height = '0px'; });
+    }
+    panel.addEventListener('transitionend', function done(e) {
+      if (e.propertyName !== 'height') return;
+      if (btn.getAttribute('aria-expanded') !== 'true') panel.hidden = true;
+      panel.style.height = '';
+      panel.removeEventListener('transitionend', done);
+    });
+  }
+
+  // Più box sulla stessa riga: si aprono e chiudono insieme, così restano della stessa altezza
+  function columnsCount() {
+    return getComputedStyle(serviceGrid).gridTemplateColumns.split(' ').length;
+  }
+
+  serviceToggles.forEach(function (btn) {
+    document.getElementById(btn.getAttribute('aria-controls')).hidden = true;
+    btn.addEventListener('click', function () {
+      var open = btn.getAttribute('aria-expanded') !== 'true';
+      var targets = columnsCount() > 1 ? serviceToggles : [btn];
+      targets.forEach(function (b) { setServiceOpen(b, open); });
+      if (!open) {
+        var card = btn.closest('.service-card');
+        if (card.getBoundingClientRect().top < 0) card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      }
+    });
+  });
+
   /* ---------- Anno nel footer ---------- */
   var y = document.getElementById('year');
   if (y) y.textContent = String(new Date().getFullYear());
